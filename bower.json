@@ -1,0 +1,28 @@
+{
+  "name": "saphir",
+  "version": "0.1.0",
+  "description": "An object-observation helper",
+  "main": "dist/saphir.js",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "keywords": [],
+  "ignore": [
+    "node_modules",
+    "coverage",
+    "test",
+    "src",
+    ".editorconfig",
+    ".gitignore",
+    ".npmignore",
+    ".travis.yml",
+    "gulpfile.js",
+    "package.json"
+  ],
+  "authors": [
+    "Tamer Aydin"
+  ],
+  "license": "MIT",
+  "homepage": ""
+}
