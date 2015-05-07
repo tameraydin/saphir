@@ -1,11 +1,11 @@
 {
   "name": "saphir",
   "version": "0.1.0",
-  "description": "An object-observation helper",
+  "description": "Observable objects",
   "main": "dist/saphir.js",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/tameraydin/saphir.git"
   },
   "keywords": [],
   "ignore": [
@@ -21,8 +21,11 @@
     "package.json"
   ],
   "authors": [
-    "Tamer Aydin"
+    {
+      "name": "Tamer Aydin",
+      "homepage": "http://tamerayd.in"
+    }
   ],
   "license": "MIT",
-  "homepage": ""
+  "homepage": "https://github.com/tameraydin/saphir"
 }

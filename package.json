@@ -1,14 +1,14 @@
 {
   "name": "saphir",
   "version": "0.1.0",
-  "description": "An object-observation helper",
+  "description": "Observable objects",
   "main": "dist/saphir.js",
   "scripts": {
     "test": "gulp test"
   },
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/tameraydin/saphir.git"
   },
   "keywords": [],
   "author": "Tamer Aydin (http://tamerayd.in)",
@@ -18,13 +18,14 @@
   }],
   "license": "MIT",
   "bugs": {
-    "url": ""
+    "url": "https://github.com/tameraydin/saphir/issues"
   },
-  "homepage": "",
+  "homepage": "https://github.com/tameraydin/saphir",
   "jshintConfig": {
     "strict": false,
     "globalstrict": true,
     "unused": true,
+    "esnext": true,
     "predef": []
   },
   "engines": {
@@ -35,6 +36,8 @@
     "coveralls": "^2.11.2",
     "del": "^1.1.1",
     "gulp": "^3.8.10",
+    "gulp-babel": "^5.1.0",
+    "gulp-concat": "^2.5.2",
     "gulp-header": "^1.2.2",
     "gulp-istanbul": "^0.6.0",
     "gulp-jasmine": "^2.0.0",
