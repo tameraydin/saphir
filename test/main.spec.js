@@ -1,18 +1,30 @@
 if (typeof Saphir === 'undefined') {
-  var Saphir = require('../test/saphir.js');
+  var saphir = require('../test/saphir.js');
 }
 
-var module;
+var module, observable;
 
 describe('saphir', function() {
 
-  describe('itself', function() {
+  beforeEach(function() {
+    module = saphir;
+  });
+
+  it('should have methods', function() {
+    expect(module.createObservable).toBeDefined();
+  });
+
+  describe('observables', function() {
+    var observableObj, observableArr;
+
     beforeEach(function() {
-      module = new Saphir();
+      observableObj = saphir.createObservable({});
+      observableArr = saphir.createObservable([]);
     });
 
-    it('should work', function() {
-      expect(module.getName()).toBe('saphir');
+    it('should have its methods', function() {
+      expect(observableObj.observe).toBeDefined();
+      expect(observableArr.observe).toBeDefined();
     });
   });
 });
