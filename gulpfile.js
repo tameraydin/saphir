@@ -1,11 +1,13 @@
 // gulp node modules
 var gulp = require('gulp');
+var concat = require('gulp-concat');
 var jshint = require('gulp-jshint');
 var jasmine = require('gulp-jasmine');
 var istanbul = require('gulp-istanbul');
 var uglify = require('gulp-uglify');
-var rename = require("gulp-rename");
+var rename = require('gulp-rename');
 var header = require('gulp-header');
+var babel = require('gulp-babel');
 
 // node modules
 var del = require('del');
@@ -42,12 +44,24 @@ gulp.task('jshint', function() {
     .pipe(jshint.reporter('fail'));
 });
 
-gulp.task('test', function() {
-  return gulp.src(PATH.TEST + '*.spec.js')
-    .pipe(jasmine());
+gulp.task('prepare-test', function() {
+  return gulp.src(PATH.SOURCE + '*.js')
+    .pipe(babel({
+      blacklist: ['useStrict']
+    }))
+    .pipe(concat(pkg.name + '.js'))
+    .pipe(gulp.dest(PATH.TEST));
 });
 
-gulp.task('coverage', function(cb) {
+gulp.task('test', ['prepare-test'], function() {
+  return gulp.src(PATH.TEST + '*.spec.js')
+    .pipe(jasmine())
+    .on('end', function() {
+      del([PATH.TEST + pkg.name + '.js']);
+    });
+});
+
+gulp.task('coverage', ['prepare-test'], function(cb) {
   gulp.src(PATH.SOURCE + '*.js')
     .pipe(istanbul())
     .pipe(istanbul.hookRequire())
@@ -55,15 +69,19 @@ gulp.task('coverage', function(cb) {
       gulp.src(PATH.TEST + '*.spec.js')
         .pipe(jasmine())
         .pipe(istanbul.writeReports())
-        .on('end', cb);
+        .on('end', function() {
+          del([PATH.TEST + pkg.name + '.js']);
+          cb();
+        });
     });
 });
 
-gulp.task('copy', function() {
+gulp.task('convert-and-concat', function() {
   return gulp.src(PATH.SOURCE + '*.js')
-    .pipe(rename({
-      basename: pkg.name
+    .pipe(babel({
+      blacklist: ['useStrict']
     }))
+    .pipe(concat(pkg.name + '.js'))
     .pipe(gulp.dest(PATH.DIST));
 });
 
@@ -71,7 +89,6 @@ gulp.task('uglify', function() {
   return gulp.src(PATH.DIST + pkg.name + '.js')
     .pipe(uglify())
     .pipe(rename({
-      basename: pkg.name,
       suffix: '.min'
     }))
     .pipe(gulp.dest(PATH.DIST));
@@ -97,9 +114,8 @@ gulp.task('autotest', function() {
 gulp.task('build', ['clean'], function(cb) {
   runSequence(
     'jshint',
-    'test',
     'coverage',
-    'copy',
+    'convert-and-concat',
     'uglify',
     'banner',
     cb);

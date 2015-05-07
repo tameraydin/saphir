@@ -1,5 +1,5 @@
 if (typeof Saphir === 'undefined') {
-  var Saphir = require('../src/main.js');
+  var Saphir = require('../test/saphir.js');
 }
 
 var module;
