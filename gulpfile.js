@@ -56,6 +56,9 @@ gulp.task('prepare-test', function() {
 gulp.task('test', ['prepare-test'], function() {
   return gulp.src(PATH.TEST + '*.spec.js')
     .pipe(jasmine())
+    .on('error', function() {
+      del([PATH.TEST + pkg.name + '.js']);
+    })
     .on('end', function() {
       del([PATH.TEST + pkg.name + '.js']);
     });
