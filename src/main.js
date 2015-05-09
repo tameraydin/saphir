@@ -18,48 +18,49 @@
     return value;
   }
 
-  function _getGetter(value) {
-    return function() {
-      return value;
-    };
-  }
+  function getObjectDescriptor(value, callbacks, key) {
+    return {
+      enumerable: true,
+      configurable: true,
+      get: function() {
+        return value;
+      },
+      set: function(newValue) {
+        if (newValue !== value) {
+          let oldValue = _copy(value);
 
-  function _getSetter(value, callbacks, key) {
-    return function(newValue) {
-      if (newValue !== value) {
-        let oldValue = _copy(value);
-
-        if (!_isSaphirObject(newValue)) {
-          if (newValue instanceof Array) {
-            newValue = new SaphirArray(newValue);
-          } else if (_isObject(newValue)) {
-            newValue = new SaphirObject(newValue);
+          if (!_isSaphirObject(newValue)) {
+            if (newValue instanceof Array) {
+              newValue = new SaphirArray(newValue);
+            } else if (_isObject(newValue)) {
+              newValue = new SaphirObject(newValue);
+            }
           }
-        }
 
-        value = newValue;
-        if (callbacks[key]) {
-          callbacks[key](newValue, oldValue);
+          value = newValue;
+          if (callbacks[key]) {
+            callbacks[key](newValue, oldValue);
+          }
         }
       }
     };
   }
 
   class SaphirObject {
-    observe(prop, callback) {
+    subscribe(prop, callback) {
       if (typeof prop === 'string' &&
           typeof callback === 'function' &&
           this.hasOwnProperty(prop)) {
-        this.__callbacks[prop] = callback;
+        this.__cb[prop] = callback;
         return true;
       }
       return false;
     }
 
-    forget(prop) {
+    unsubscribe(prop) {
       if (typeof prop === 'string' &&
-          this.__callbacks[prop]) {
-        this.__callbacks[prop] = null;
+          this.__cb[prop]) {
+        this.__cb[prop] = null;
         return true;
       }
       return false;
@@ -67,10 +68,10 @@
   }
 
   class SaphirArray {
-    observe() {
+    subscribe() {
       return true;
     }
-    forget() {
+    unsubscribe() {
       return true;
     }
   }
@@ -87,12 +88,12 @@
       } else if (_isObject(model)) {
         observable = new SaphirObject(model);
       } else {
-        return false;
+        return model;
       }
 
       Object.defineProperty(
         observable,
-        '__callbacks',
+        '__cb',
         {
           writable: true,
           value: {}
@@ -100,17 +101,12 @@
 
       let value;
       for (let key in model) {
-        value = model[key];
+        value = this.createObservable(model[key]);
 
         Object.defineProperty(
           observable,
           key,
-          {
-            enumerable: true,
-            configurable: true,
-            get: _getGetter(value),
-            set: _getSetter(value, observable.__callbacks, key)
-          });
+          getObjectDescriptor(value, observable.__cb, key));
       }
 
       return observable;
