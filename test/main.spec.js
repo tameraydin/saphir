@@ -1,8 +1,4 @@
-if (typeof Saphir === 'undefined') {
-  var saphir = require('../test/saphir.js');
-}
-
-var module,
+var saphir = require('../test/saphir.js'),
   observable,
   observableObj,
   fake = {
@@ -11,12 +7,8 @@ var module,
 
 describe('saphir', function() {
 
-  beforeEach(function() {
-    module = saphir;
-  });
-
   it('should have methods', function() {
-    expect(module.createObservable).toBeDefined();
+    expect(saphir.createObservable).toBeDefined();
   });
 
   describe('observables', function() {
@@ -119,6 +111,29 @@ describe('saphir', function() {
 
       observableObj.b = 2;
       expect(fake.callback).toHaveBeenCalled();
+    });
+
+    it('should convert its new Object value to SaphirObject', function() {
+      observableObj.b = {
+        f: {
+          g: 1
+        }
+      };
+
+      expect(observableObj.b.f.subscribe).toBeDefined();
+      expect(fake.callback.calls.argsFor(0)[0]).toEqual(
+        saphir.createObservable({
+          f: {
+            g: 1
+          }
+        }));
+      expect(fake.callback.calls.argsFor(0)[1]).toEqual(
+        saphir.createObservable({
+          c: 2,
+          d: {
+            e: 3
+          }
+        }));
     });
   });
 });

@@ -11,13 +11,6 @@
       Object.getPrototypeOf(value) === Object.prototype;
   }
 
-  function _copy(value) {
-    if (_isObject(value) || value instanceof Array) {
-      return JSON.parse(JSON.stringify(value));
-    }
-    return value;
-  }
-
   function getObjectDescriptor(value, callbacks, key) {
     return {
       enumerable: true,
@@ -27,19 +20,11 @@
       },
       set: function(newValue) {
         if (newValue !== value) {
-          let oldValue = _copy(value);
+          let oldValue = value;
 
-          if (!_isSaphirObject(newValue)) {
-            if (newValue instanceof Array) {
-              newValue = new SaphirArray(newValue);
-            } else if (_isObject(newValue)) {
-              newValue = new SaphirObject(newValue);
-            }
-          }
-
-          value = newValue;
+          value = saphir.createObservable(newValue);
           if (callbacks[key]) {
-            callbacks[key](newValue, oldValue);
+            callbacks[key](value, oldValue);
           }
         }
       }
