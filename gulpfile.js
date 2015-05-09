@@ -65,7 +65,7 @@ gulp.task('test', ['prepare-test'], function() {
 });
 
 gulp.task('coverage', ['prepare-test'], function(cb) {
-  gulp.src(PATH.SOURCE + '*.js')
+  gulp.src(PATH.TEST + pkg.name + '.js')
     .pipe(istanbul())
     .pipe(istanbul.hookRequire())
     .on('finish', function() {
