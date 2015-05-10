@@ -136,4 +136,35 @@ describe('saphir', function() {
         }));
     });
   });
+
+  describe('array', function() {
+    beforeEach(function() {
+      observableArr = saphir.createObservable([1, {
+        a: 2
+      }, 3]);
+    });
+
+    it('accessors should work', function() {
+      expect(observableArr[0]).toBe(1);
+      expect(observableArr[1]).toEqual(saphir.createObservable({
+        a: 2
+      }));
+      expect(observableArr[1].a).toBe(2);
+      expect(observableArr[2]).toBe(3);
+      expect(observableArr.length).toBe(3);
+
+      observableArr[2] = 4;
+      expect(observableArr[2]).toBe(4);
+    });
+
+    it('should be able to apply default Array methods', function() {
+      observableArr.push(4);
+      expect(observableArr[3]).toBe(4);
+      expect(observableArr.length).toBe(4);
+
+      delete observableArr[2];
+      expect(observableArr[2]).toBe(undefined);
+      expect(observableArr.length).toBe(4);
+    });
+  });
 });
