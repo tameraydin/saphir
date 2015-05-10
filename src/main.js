@@ -1,79 +1,110 @@
 (function() {
   'use strict';
 
+  /**
+   * Determine whether the given value is a Saphir object
+   *
+   * @param  {Any}     value
+   * @return {Boolean} result
+   */
   function _isSaphirObject(value) {
     return value instanceof SaphirObject ||
       value instanceof SaphirArray;
   }
 
+  /**
+   * Determine whether the given value is an Object literal
+   *
+   * @param  {Any}     value
+   * @return {Boolean} result
+   */
   function _isObject(value) {
     return value instanceof Object &&
       Object.getPrototypeOf(value) === Object.prototype;
   }
 
-  function getArrayDescriptor(observable, key) {
-    return {
-      enumerable: true,
-      configurable: true,
-      get() {
-        return observable.__value[key];
-      },
-      set(newValue) {
-        if (newValue !== observable.__value[key]) {
-          let oldValue = observable.__value[key];
+  /**
+   * [_decorateWithEnhancedMethods description]
+   *
+   * @param  {[type]}
+   * @param  {[type]}
+   * @param  {[type]}
+   * @param  {[type]}
+   */
+  function _decorateWithEnhancedMethods(obj, Base, filter, descriptor) {
+    let supportedArrayMethods = Object.getOwnPropertyNames(Base.prototype);
 
-          observable.__value[key] = saphir.createObservable(newValue);
-          if (observable.__cb[key]) {
-            observable.__cb[key](observable.__value[key], oldValue);
-          }
-        }
+    for (let i = 0; i < supportedArrayMethods.length; i++) {
+      let prop = supportedArrayMethods[i];
+
+      if (typeof Base.prototype[prop] === filter) {
+        Object.defineProperty(
+          obj,
+          prop,
+          {
+            value: descriptor(prop)
+          });
       }
-    };
+    }
   }
 
-  function getObjectDescriptor(value, callbacks, key) {
-    return {
-      enumerable: true,
-      configurable: true,
-      get() {
+  class SapphireArrayDescriptor {
+    constructor(observable, key) {
+      this.enumerable = true;
+      this.configurable = true;
+      this.get = function() {
+        return observable.__value[key];
+      };
+      this.set = function(newValue) {
+        let value = observable.__value[key];
+
+        if (newValue !== value) {
+          let oldValue = value;
+
+          observable.__value[key] = saphir.createObservable(newValue);
+
+          let callbacks = observable.__cb[key];
+          if (callbacks) {
+            callbacks(value, oldValue);
+          }
+        }
+      };
+    }
+  }
+
+  class SapphireObjectDescriptor {
+    constructor(value, callbacks, key) {
+      this.enumerable = true;
+      this.configurable = true;
+      this.get = function() {
         return value;
-      },
-      set(newValue) {
+      };
+      this.set = function(newValue) {
         if (newValue !== value) {
           let oldValue = value;
 
           value = saphir.createObservable(newValue);
+
           if (callbacks[key]) {
             callbacks[key](value, oldValue);
           }
         }
-      }
-    };
-  }
-
-  var SaphirArrayBase = function() {};
-  SaphirArrayBase.prototype = {};
-
-  function getArrDescriptor(prop) {
-    return function() {
-      Array.prototype[prop].apply(this.__value, arguments);
-      _updateKeys(this);
-    };
-  }
-
-  let arrayProps = Object.getOwnPropertyNames(Array.prototype);
-  for (let i = 0; i < arrayProps.length; i++) {
-    let prop = arrayProps[i];
-
-    if (typeof Array.prototype[prop] === 'function') {
-      Object.defineProperty(
-        SaphirArrayBase.prototype,
-        prop,
-        {
-          value: getArrDescriptor(prop)
-        });
+      };
     }
   }
+
+  let ArrayPrototype = function() {};
+  ArrayPrototype.prototype = {};
+  _decorateWithEnhancedMethods(
+    ArrayPrototype.prototype,
+    Array,
+    'function',
+    function(prop) {
+      return function() {
+        Array.prototype[prop].apply(this.__value, arguments);
+        _updateKeys(this);
+      };
+    });
 
   function _updateKeys(model) {
     let value;
@@ -83,11 +114,11 @@
       Object.defineProperty(
         model,
         key,
-        getArrayDescriptor(model, key));
+        new SapphireArrayDescriptor(model, key));
     }
   }
 
-  class SaphirArray extends SaphirArrayBase {
+  class SaphirArray extends ArrayPrototype {
     constructor(model) {
       super();
 
@@ -115,7 +146,7 @@
         Object.defineProperty(
           this,
           key,
-          getArrayDescriptor(this, key));
+          new SapphireArrayDescriptor(this, key));
       }
 
       Object.defineProperty(
@@ -154,7 +185,7 @@
         Object.defineProperty(
           this,
           key,
-          getObjectDescriptor(value, this.__cb, key));
+          new SapphireObjectDescriptor(value, this.__cb, key));
       }
     }
 
