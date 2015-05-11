@@ -4,8 +4,8 @@
   /**
    * Determine whether the given value is a Saphir object
    *
-   * @param  {Any}     value
-   * @return {Boolean} result
+   * @param  {Any}     Value
+   * @return {Boolean} Result
    */
   function _isSaphirObject(value) {
     return value instanceof SaphirObject ||
@@ -15,8 +15,8 @@
   /**
    * Determine whether the given value is an Object literal
    *
-   * @param  {Any}     value
-   * @return {Boolean} result
+   * @param  {Any}     Value
+   * @return {Boolean} Result
    */
   function _isObject(value) {
     return value instanceof Object &&
@@ -24,12 +24,13 @@
   }
 
   /**
-   * [_decorateWithEnhancedMethods description]
+   * Decorates certain type of methods in given class's
+   * prototype and assigns to given object.
    *
-   * @param  {[type]}
-   * @param  {[type]}
-   * @param  {[type]}
-   * @param  {[type]}
+   * @param  {Object}   Object to assign
+   * @param  {Class}    Base class
+   * @param  {String}   Type of methods
+   * @param  {Function} Decorator function
    */
   function _decorateWithEnhancedMethods(obj, Base, filter, descriptor) {
     let supportedArrayMethods = Object.getOwnPropertyNames(Base.prototype);
@@ -37,24 +38,51 @@
     for (let i = 0; i < supportedArrayMethods.length; i++) {
       let prop = supportedArrayMethods[i];
 
-      if (typeof Base.prototype[prop] === filter) {
-        Object.defineProperty(
-          obj,
-          prop,
-          {
-            value: descriptor(prop)
-          });
+      if (typeof Base.prototype[prop] === filter &&
+        prop !== 'constructor') {
+          Object.defineProperty(
+            obj,
+            prop,
+            {
+              writable: true,
+              value: descriptor(Base, prop)
+            });
       }
     }
   }
 
-  class SapphireArrayDescriptor {
-    constructor(observable, key) {
+  /**
+   * [ArrayPrototype description]
+   */
+  let ArrayPrototype = function() {};
+  ArrayPrototype.prototype = {};
+
+  _decorateWithEnhancedMethods(
+    ArrayPrototype.prototype,
+    Array,
+    'function',
+    function(Base, prop) {
+      return function() {
+        Base.prototype[prop].apply(this.__value, arguments);
+        this.updateKeys();
+      };
+    });
+
+  class SapphireDescriptor {
+    constructor() {
       this.enumerable = true;
       this.configurable = true;
+    }
+  }
+
+  class SapphireArrayDescriptor extends SapphireDescriptor {
+    constructor(observable, key) {
+      super();
+
       this.get = function() {
         return observable.__value[key];
       };
+
       this.set = function(newValue) {
         let value = observable.__value[key];
 
@@ -72,13 +100,14 @@
     }
   }
 
-  class SapphireObjectDescriptor {
+  class SapphireObjectDescriptor extends SapphireDescriptor {
     constructor(value, callbacks, key) {
-      this.enumerable = true;
-      this.configurable = true;
+      super();
+
       this.get = function() {
         return value;
       };
+
       this.set = function(newValue) {
         if (newValue !== value) {
           let oldValue = value;
@@ -90,31 +119,6 @@
           }
         }
       };
-    }
-  }
-
-  let ArrayPrototype = function() {};
-  ArrayPrototype.prototype = {};
-  _decorateWithEnhancedMethods(
-    ArrayPrototype.prototype,
-    Array,
-    'function',
-    function(prop) {
-      return function() {
-        Array.prototype[prop].apply(this.__value, arguments);
-        _updateKeys(this);
-      };
-    });
-
-  function _updateKeys(model) {
-    let value;
-    for (let key in model.__value) {
-      value = saphir.createObservable(model.__value[key]);
-
-      Object.defineProperty(
-        model,
-        key,
-        new SapphireArrayDescriptor(model, key));
     }
   }
 
@@ -138,16 +142,23 @@
           value: []
         });
 
-      let value;
-      for (let key in model) {
-        value = saphir.createObservable(model[key]);
-        this.__value[key] = value;
+      Object.defineProperty(
+        this,
+        'updateKeys',
+        {
+          value: function(model = this.__value) {
+            for (let key in model) {
+              this.__value[key] = saphir.createObservable(model[key]);
 
-        Object.defineProperty(
-          this,
-          key,
-          new SapphireArrayDescriptor(this, key));
-      }
+              Object.defineProperty(
+                this,
+                key,
+                new SapphireArrayDescriptor(this, key));
+            }
+          }
+        });
+
+      this.updateKeys(model);
 
       Object.defineProperty(
         this,
