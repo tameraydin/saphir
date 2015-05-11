@@ -33,9 +33,6 @@ describe('saphir', function() {
         a: 1,
         b: 2
       });
-      observableObj.subscribe('a', function() {
-        fake.callback.apply(this, arguments);
-      });
       spyOn(fake, 'callback').and.callThrough();
     });
 
@@ -51,14 +48,23 @@ describe('saphir', function() {
     });
 
     it('subscribtion should only accept valid parameters', function() {
-      expect(observableObj.subscribe()).toBeFalsy();
-      expect(observableObj.subscribe('')).toBeFalsy();
-      expect(observableObj.subscribe('a')).toBeFalsy();
-      expect(observableObj.subscribe('b', function() {})).toBeTruthy();
-      expect(observableObj.subscribe('c', function() {})).toBeFalsy();
+      observableObj.subscribe()
+      expect(observableObj.__cb).toEqual({});
+      observableObj.subscribe('')
+      expect(observableObj.__cb).toEqual({});
+      observableObj.subscribe('a')
+      expect(observableObj.__cb).toEqual({});
+      observableObj.subscribe('c', function() {})
+      expect(observableObj.__cb).toEqual({});
+      observableObj.subscribe('b', function() {});
+      expect(observableObj.__cb).not.toEqual({});
     });
 
     it('subscribtion should work', function() {
+      observableObj.subscribe('a', function() {
+        fake.callback.apply(this, arguments);
+      });
+
       expect(observableObj.__cb.a).toBeDefined();
       expect(fake.callback).not.toHaveBeenCalled();
 
@@ -77,6 +83,10 @@ describe('saphir', function() {
     });
 
     it('unsubscribtion should work', function() {
+      observableObj.subscribe('a', function() {
+        fake.callback.apply(this, arguments);
+      });
+
       observableObj.unsubscribe('a');
 
       observableObj.a = 2;
@@ -142,6 +152,10 @@ describe('saphir', function() {
       observableArr = saphir.createObservable([1, {
         a: 2
       }, 3]);
+      observableArr.subscribe(function() {
+        fake.callback.apply(this, arguments);
+      });
+      spyOn(fake, 'callback').and.callThrough();
     });
 
     it('accessors should work', function() {
@@ -165,6 +179,46 @@ describe('saphir', function() {
       delete observableArr[2];
       expect(observableArr[2]).toBe(undefined);
       expect(observableArr.length).toBe(4);
+    });
+
+    it('subscribtion should work', function() {
+      expect(observableArr.__cb).toBeDefined();
+      expect(fake.callback).not.toHaveBeenCalled();
+
+      observableArr[0] = 2;
+      expect(fake.callback).toHaveBeenCalled();
+      expect(fake.callback.calls.argsFor(0)).toEqual([saphir.createObservable([2, {
+        a: 2
+      }, 3])]);
+
+      observableArr[0] = 2;
+      expect(fake.callback.calls.count()).toEqual(1);
+
+      observableArr.push(4);
+      expect(fake.callback.calls.count()).toEqual(2);
+
+      observableArr.splice(2, 2);
+      expect(fake.callback.calls.count()).toEqual(3);
+      expect(observableArr.length).toBe(2);
+
+      // observableArr[1].a = 1;
+      // expect(fake.callback.calls.count()).toEqual(4);
+      // expect(fake.callback.calls.argsFor(3)).toEqual([observableArr]);
+
+      // observableArr[1].subscribe('a', function() {
+      //   fake.callback.apply(this, arguments);
+      // });
+      // observableArr[1].a = 0;
+      // expect(fake.callback.calls.count()).toEqual(6);
+      // expect(fake.callback.calls.argsFor(4)).toEqual([0, 1]);
+      // expect(fake.callback.calls.argsFor(5)).toEqual([observableArr]);
+
+      // observableArr[1].a = {b: 1}; // 8 calls
+      // observableArr[1].a.subscribe('b', function() {
+      //   fake.callback.apply(this, arguments);
+      // });
+      // observableArr[1].a.b = 2;
+      // expect(fake.callback.calls.count()).toEqual(11);
     });
   });
 });

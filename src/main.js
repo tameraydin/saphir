@@ -65,6 +65,9 @@
       return function() {
         Base.prototype[prop].apply(this.__value, arguments);
         this.updateKeys();
+        if (this.__cb) {
+          this.__cb(this);
+        }
       };
     });
 
@@ -87,13 +90,10 @@
         let value = observable.__value[key];
 
         if (newValue !== value) {
-          let oldValue = value;
-
           observable.__value[key] = saphir.createObservable(newValue);
 
-          let callbacks = observable.__cb[key];
-          if (callbacks) {
-            callbacks(value, oldValue);
+          if (observable.__cb) {
+            observable.__cb(observable);
           }
         }
       };
@@ -170,12 +170,14 @@
         });
     }
 
-    subscribe() {
-      return true;
+    subscribe(callback) {
+      this.__cb = callback;
+      return this;
     }
 
     unsubscribe() {
-      return true;
+      this.__cb = null;
+      return this;
     }
   }
 
@@ -205,18 +207,16 @@
           typeof callback === 'function' &&
           this.hasOwnProperty(prop)) {
         this.__cb[prop] = callback;
-        return true;
       }
-      return false;
+      return this;
     }
 
     unsubscribe(prop) {
       if (typeof prop === 'string' &&
           this.__cb[prop]) {
         this.__cb[prop] = null;
-        return true;
       }
-      return false;
+      return this;
     }
   }
 
