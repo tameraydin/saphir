@@ -54,14 +54,14 @@ gulp.task('prepare-test', function() {
 });
 
 gulp.task('test', ['prepare-test'], function() {
+  var cleanup = function() {
+    del([PATH.TEST + pkg.name + '.js']);
+  };
+
   return gulp.src(PATH.TEST + '*.spec.js')
     .pipe(jasmine())
-    .on('error', function() {
-      del([PATH.TEST + pkg.name + '.js']);
-    })
-    .on('end', function() {
-      del([PATH.TEST + pkg.name + '.js']);
-    });
+    .on('error', cleanup)
+    .on('end', cleanup);
 });
 
 gulp.task('coverage', ['prepare-test'], function(cb) {
