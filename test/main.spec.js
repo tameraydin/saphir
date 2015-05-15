@@ -1,4 +1,6 @@
 var saphir = require('../test/saphir.js'),
+  SaphirObject = saphir.SaphirObject,
+  SaphirArray = saphir.SaphirArray,
   observable,
   observableObj,
   fake = {
@@ -8,15 +10,16 @@ var saphir = require('../test/saphir.js'),
 describe('saphir', function() {
 
   it('should have methods', function() {
-    expect(saphir.createObservable).toBeDefined();
+    expect(saphir.SaphirObject).toBeDefined();
+    expect(saphir.SaphirArray).toBeDefined();
   });
 
   describe('observables', function() {
     var observableObj, observableArr;
 
     beforeEach(function() {
-      observableObj = saphir.createObservable({});
-      observableArr = saphir.createObservable([]);
+      observableObj = new SaphirObject({});
+      observableArr = new SaphirArray([]);
     });
 
     it('should have its methods', function() {
@@ -29,7 +32,7 @@ describe('saphir', function() {
 
   describe('object', function() {
     beforeEach(function() {
-      observableObj = saphir.createObservable({
+      observableObj = new SaphirObject({
         a: 1,
         b: 2
       });
@@ -61,10 +64,11 @@ describe('saphir', function() {
     });
 
     it('subscribtion should work', function() {
-      observableObj.subscribe('a', function() {
+      var subId = observableObj.subscribe('a', function() {
         fake.callback.apply(this, arguments);
       });
 
+      // expect(typeof subId).toBe('string');
       expect(observableObj.__cb.a).toBeDefined();
       expect(fake.callback).not.toHaveBeenCalled();
 
@@ -97,7 +101,7 @@ describe('saphir', function() {
 
   describe('nested object', function() {
     beforeEach(function() {
-      observableObj = saphir.createObservable({
+      observableObj = new SaphirObject({
         a: 1,
         b: {
           c: 2,
@@ -132,13 +136,13 @@ describe('saphir', function() {
 
       expect(observableObj.b.f.subscribe).toBeDefined();
       expect(fake.callback.calls.argsFor(0)[0]).toEqual(
-        saphir.createObservable({
+        new SaphirObject({
           f: {
             g: 1
           }
         }));
       expect(fake.callback.calls.argsFor(0)[1]).toEqual(
-        saphir.createObservable({
+        new SaphirObject({
           c: 2,
           d: {
             e: 3
@@ -149,7 +153,7 @@ describe('saphir', function() {
 
   describe('array', function() {
     beforeEach(function() {
-      observableArr = saphir.createObservable([1, {
+      observableArr = new SaphirArray([1, {
         a: 2
       }, 3]);
       observableArr.subscribe(function() {
@@ -160,7 +164,7 @@ describe('saphir', function() {
 
     it('accessors should work', function() {
       expect(observableArr[0]).toBe(1);
-      expect(observableArr[1]).toEqual(saphir.createObservable({
+      expect(observableArr[1]).toEqual(new SaphirObject({
         a: 2
       }));
       expect(observableArr[1].a).toBe(2);
@@ -187,7 +191,7 @@ describe('saphir', function() {
 
       observableArr[0] = 2;
       expect(fake.callback).toHaveBeenCalled();
-      expect(fake.callback.calls.argsFor(0)).toEqual([saphir.createObservable([2, {
+      expect(fake.callback.calls.argsFor(0)).toEqual([new SaphirArray([2, {
         a: 2
       }, 3])]);
 

@@ -1,6 +1,20 @@
 (function() {
   'use strict';
 
+  function _convertToSaphir(value) {
+    if (_isSaphirObject(value)) {
+      return value;
+
+    } else if (value instanceof Array) {
+      return new SaphirArray(value);
+
+    } else if (_isObject(value)) {
+      return new SaphirObject(value);
+    }
+
+    return value;
+  }
+
   /**
    * Determine whether the given value is a Saphir object
    *
@@ -71,14 +85,14 @@
       };
     });
 
-  class SapphireDescriptor {
+  class SaphirDescriptor {
     constructor() {
       this.enumerable = true;
       this.configurable = true;
     }
   }
 
-  class SapphireArrayDescriptor extends SapphireDescriptor {
+  class SaphirArrayDescriptor extends SaphirDescriptor {
     constructor(observable, key) {
       super();
 
@@ -90,7 +104,7 @@
         let value = observable.__value[key];
 
         if (newValue !== value) {
-          observable.__value[key] = saphir.createObservable(newValue);
+          observable.__value[key] = _convertToSaphir(newValue);
 
           if (observable.__cb) {
             observable.__cb(observable);
@@ -100,7 +114,7 @@
     }
   }
 
-  class SapphireObjectDescriptor extends SapphireDescriptor {
+  class SaphirObjectDescriptor extends SaphirDescriptor {
     constructor(value, callbacks, key) {
       super();
 
@@ -112,7 +126,7 @@
         if (newValue !== value) {
           let oldValue = value;
 
-          value = saphir.createObservable(newValue);
+          value = _convertToSaphir(newValue);
 
           if (callbacks[key]) {
             callbacks[key](value, oldValue);
@@ -148,12 +162,12 @@
         {
           value: function(model = this.__value) {
             for (let key in model) {
-              this.__value[key] = saphir.createObservable(model[key]);
+              this.__value[key] = _convertToSaphir(model[key]);
 
               Object.defineProperty(
                 this,
                 key,
-                new SapphireArrayDescriptor(this, key));
+                new SaphirArrayDescriptor(this, key));
             }
           }
         });
@@ -193,12 +207,12 @@
 
       let value;
       for (let key in model) {
-        value = saphir.createObservable(model[key]);
+        value = _convertToSaphir(model[key]);
 
         Object.defineProperty(
           this,
           key,
-          new SapphireObjectDescriptor(value, this.__cb, key));
+          new SaphirObjectDescriptor(value, this.__cb, key));
       }
     }
 
@@ -222,24 +236,8 @@
 
   // MODULE
   let saphir = {
-    createObservable: function(model) {
-      let observable;
-
-      if (_isSaphirObject(model)) {
-        return model;
-
-      } else if (model instanceof Array) {
-        observable = new SaphirArray(model);
-
-      } else if (_isObject(model)) {
-        observable = new SaphirObject(model);
-
-      } else {
-        return model;
-      }
-
-      return observable;
-    }
+    SaphirObject: SaphirObject,
+    SaphirArray: SaphirArray
   };
 
   // EXPORT
