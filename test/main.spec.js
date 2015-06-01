@@ -110,6 +110,9 @@ describe('saphir', function() {
           }
         }
       });
+      observableObj.subscribe('a', function() {
+        fake.callback.apply(this, arguments);
+      });
       observableObj.subscribe('b', function() {
         fake.callback.apply(this, arguments);
       });
@@ -123,7 +126,12 @@ describe('saphir', function() {
     it('subscribtion should work', function() {
       expect(fake.callback).not.toHaveBeenCalled();
 
-      observableObj.b = 2;
+      observableObj.a = 4;
+      expect(fake.callback).toHaveBeenCalled();
+    });
+
+    it('subscribtion should be able to observe inner objects', function() {
+      observableObj.b.d = 5;
       expect(fake.callback).toHaveBeenCalled();
     });
 
@@ -148,6 +156,9 @@ describe('saphir', function() {
             e: 3
           }
         }));
+
+      observableObj.b.f = 3;
+      expect(fake.callback.calls.count()).toEqual(2);
     });
   });
 
