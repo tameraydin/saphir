@@ -5,9 +5,7 @@
  */
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-var _get = function get(_x2, _x3, _x4) { var _again = true; _function: while (_again) { desc = parent = getter = undefined; _again = false; var object = _x2,
-    property = _x3,
-    receiver = _x4; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x2 = parent; _x3 = property; _x4 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+var _get = function get(_x2, _x3, _x4) { var _again = true; _function: while (_again) { var object = _x2, property = _x3, receiver = _x4; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x2 = parent; _x3 = property; _x4 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
 
 function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; }
 
@@ -15,6 +13,26 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 (function () {
   'use strict';
+
+  /**
+   * Converts given value into a Saphir object/array
+   *
+   * @param  {Any}
+   * @param  {Object}
+   * @param  {String}
+   * @return {Any}
+   */
+  function _convertToSaphir(value, parent, parentKey) {
+    if (_isSaphirObject(value)) {
+      return value;
+    } else if (value instanceof Array) {
+      return new SaphirArray(value, parent);
+    } else if (_isObject(value)) {
+      return new SaphirObject(value, parent, parentKey);
+    }
+
+    return value;
+  }
 
   /**
    * Determine whether the given value is a Saphir object
@@ -34,6 +52,28 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
    */
   function _isObject(value) {
     return value instanceof Object && Object.getPrototypeOf(value) === Object.prototype;
+  }
+
+  /**
+   * Informs updated object's parents and triggers its callback
+   */
+  function _emitCallback() {
+    /*jshint validthis:true */
+    var parent = this.__p;
+
+    if (parent) {
+      if (parent instanceof SaphirObject) {
+        if (parent.__cb[this.__pk]) {
+          parent.__cb[this.__pk](this);
+        }
+      } else {
+        if (parent.__cb) {
+          parent.__cb(parent);
+        }
+      }
+
+      parent.__ecb();
+    }
   }
 
   /**
@@ -60,9 +100,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     }
   }
 
-  /**
-   * [ArrayPrototype description]
-   */
   var ArrayPrototype = function ArrayPrototype() {};
   ArrayPrototype.prototype = {};
 
@@ -70,52 +107,52 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     return function () {
       Base.prototype[prop].apply(this.__value, arguments);
       this.updateKeys();
+      if (this.__cb) {
+        this.__cb(this);
+      }
     };
   });
 
-  var SapphireDescriptor = function SapphireDescriptor() {
-    _classCallCheck(this, SapphireDescriptor);
+  var SaphirDescriptor = function SaphirDescriptor() {
+    _classCallCheck(this, SaphirDescriptor);
 
     this.enumerable = true;
     this.configurable = true;
   };
 
-  var SapphireArrayDescriptor = (function (_SapphireDescriptor) {
-    function SapphireArrayDescriptor(observable, key) {
-      _classCallCheck(this, SapphireArrayDescriptor);
+  var SaphirArrayDescriptor = (function (_SaphirDescriptor) {
+    function SaphirArrayDescriptor(key) {
+      _classCallCheck(this, SaphirArrayDescriptor);
 
-      _get(Object.getPrototypeOf(SapphireArrayDescriptor.prototype), 'constructor', this).call(this);
+      _get(Object.getPrototypeOf(SaphirArrayDescriptor.prototype), 'constructor', this).call(this);
 
       this.get = function () {
-        return observable.__value[key];
+        return this.__value[key];
       };
 
       this.set = function (newValue) {
-        var value = observable.__value[key];
+        var value = this.__value[key];
 
         if (newValue !== value) {
-          var oldValue = value;
+          this.__value[key] = _convertToSaphir(newValue, this);
 
-          observable.__value[key] = saphir.createObservable(newValue);
-
-          var callbacks = observable.__cb[key];
-          if (callbacks) {
-            callbacks(value, oldValue);
+          if (this.__cb) {
+            this.__cb(this);
           }
         }
       };
     }
 
-    _inherits(SapphireArrayDescriptor, _SapphireDescriptor);
+    _inherits(SaphirArrayDescriptor, _SaphirDescriptor);
 
-    return SapphireArrayDescriptor;
-  })(SapphireDescriptor);
+    return SaphirArrayDescriptor;
+  })(SaphirDescriptor);
 
-  var SapphireObjectDescriptor = (function (_SapphireDescriptor2) {
-    function SapphireObjectDescriptor(value, callbacks, key) {
-      _classCallCheck(this, SapphireObjectDescriptor);
+  var SaphirObjectDescriptor = (function (_SaphirDescriptor2) {
+    function SaphirObjectDescriptor(value, key) {
+      _classCallCheck(this, SaphirObjectDescriptor);
 
-      _get(Object.getPrototypeOf(SapphireObjectDescriptor.prototype), 'constructor', this).call(this);
+      _get(Object.getPrototypeOf(SaphirObjectDescriptor.prototype), 'constructor', this).call(this);
 
       this.get = function () {
         return value;
@@ -123,31 +160,45 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
       this.set = function (newValue) {
         if (newValue !== value) {
-          var oldValue = value;
 
-          value = saphir.createObservable(newValue);
+          value = _convertToSaphir(newValue, this, key);
 
-          if (callbacks[key]) {
-            callbacks[key](value, oldValue);
+          if (this.__cb[key]) {
+            this.__cb[key](value);
           }
+
+          this.__ecb();
         }
       };
     }
 
-    _inherits(SapphireObjectDescriptor, _SapphireDescriptor2);
+    _inherits(SaphirObjectDescriptor, _SaphirDescriptor2);
 
-    return SapphireObjectDescriptor;
-  })(SapphireDescriptor);
+    return SaphirObjectDescriptor;
+  })(SaphirDescriptor);
 
   var SaphirArray = (function (_ArrayPrototype) {
-    function SaphirArray(model) {
+    function SaphirArray(model, parent) {
       _classCallCheck(this, SaphirArray);
 
       _get(Object.getPrototypeOf(SaphirArray.prototype), 'constructor', this).call(this);
 
-      Object.defineProperty(this, '__cb', {
+      Object.defineProperty(this, '__p', // parent
+      {
+        writable: true,
+        value: parent
+      });
+
+      Object.defineProperty(this, '__cb', // callback
+      {
         writable: true,
         value: {}
+      });
+
+      Object.defineProperty(this, '__ecb', // emit callback
+      {
+        writable: false,
+        value: _emitCallback
       });
 
       Object.defineProperty(this, '__value', {
@@ -155,38 +206,40 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         value: []
       });
 
-      Object.defineProperty(this, 'updateKeys', {
-        value: function value() {
-          var model = arguments[0] === undefined ? this.__value : arguments[0];
-
-          for (var key in model) {
-            this.__value[key] = saphir.createObservable(model[key]);
-
-            Object.defineProperty(this, key, new SapphireArrayDescriptor(this, key));
-          }
-        }
-      });
-
-      this.updateKeys(model);
-
       Object.defineProperty(this, 'length', {
         get: function get() {
           return this.__value.length;
         }
       });
+
+      Object.defineProperty(this, 'updateKeys', {
+        value: function value() {
+          var model = arguments.length <= 0 || arguments[0] === undefined ? this.__value : arguments[0];
+
+          for (var key in model) {
+            this.__value[key] = _convertToSaphir(model[key], this);
+
+            Object.defineProperty(this, key, new SaphirArrayDescriptor(key));
+          }
+        }
+      });
+
+      this.updateKeys(model);
     }
 
     _inherits(SaphirArray, _ArrayPrototype);
 
     _createClass(SaphirArray, [{
       key: 'subscribe',
-      value: function subscribe() {
-        return true;
+      value: function subscribe(callback) {
+        this.__cb = callback;
+        return this;
       }
     }, {
       key: 'unsubscribe',
       value: function unsubscribe() {
-        return true;
+        this.__cb = null;
+        return this;
       }
     }]);
 
@@ -194,19 +247,38 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
   })(ArrayPrototype);
 
   var SaphirObject = (function () {
-    function SaphirObject(model) {
+    function SaphirObject(model, parent, parentKey) {
       _classCallCheck(this, SaphirObject);
 
-      Object.defineProperty(this, '__cb', {
+      Object.defineProperty(this, '__p', // parent
+      {
+        writable: true,
+        value: parent
+      });
+
+      Object.defineProperty(this, '__pk', // parent key
+      {
+        writable: true,
+        value: parentKey
+      });
+
+      Object.defineProperty(this, '__cb', // callback
+      {
         writable: true,
         value: {}
       });
 
+      Object.defineProperty(this, '__ecb', // emit callback
+      {
+        writable: false,
+        value: _emitCallback
+      });
+
       var value = undefined;
       for (var key in model) {
-        value = saphir.createObservable(model[key]);
+        value = _convertToSaphir(model[key], this, key);
 
-        Object.defineProperty(this, key, new SapphireObjectDescriptor(value, this.__cb, key));
+        Object.defineProperty(this, key, new SaphirObjectDescriptor(value, key));
       }
     }
 
@@ -215,18 +287,16 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
       value: function subscribe(prop, callback) {
         if (typeof prop === 'string' && typeof callback === 'function' && this.hasOwnProperty(prop)) {
           this.__cb[prop] = callback;
-          return true;
         }
-        return false;
+        return this;
       }
     }, {
       key: 'unsubscribe',
       value: function unsubscribe(prop) {
         if (typeof prop === 'string' && this.__cb[prop]) {
           this.__cb[prop] = null;
-          return true;
         }
-        return false;
+        return this;
       }
     }]);
 
@@ -235,21 +305,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
   // MODULE
   var saphir = {
-    createObservable: function createObservable(model) {
-      var observable = undefined;
-
-      if (_isSaphirObject(model)) {
-        return model;
-      } else if (model instanceof Array) {
-        observable = new SaphirArray(model);
-      } else if (_isObject(model)) {
-        observable = new SaphirObject(model);
-      } else {
-        return model;
-      }
-
-      return observable;
-    }
+    SaphirObject: SaphirObject,
+    SaphirArray: SaphirArray
   };
 
   // EXPORT

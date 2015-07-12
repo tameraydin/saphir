@@ -1,15 +1,23 @@
 (function() {
   'use strict';
 
-  function _convertToSaphir(value) {
+  /**
+   * Converts given value into a Saphir object/array
+   *
+   * @param  {Any}
+   * @param  {Object}
+   * @param  {String}
+   * @return {Any}
+   */
+  function _convertToSaphir(value, parent, parentKey) {
     if (_isSaphirObject(value)) {
       return value;
 
     } else if (value instanceof Array) {
-      return new SaphirArray(value);
+      return new SaphirArray(value, parent);
 
     } else if (_isObject(value)) {
-      return new SaphirObject(value);
+      return new SaphirObject(value, parent, parentKey);
     }
 
     return value;
@@ -35,6 +43,28 @@
   function _isObject(value) {
     return value instanceof Object &&
       Object.getPrototypeOf(value) === Object.prototype;
+  }
+
+  /**
+   * Informs updated object's parents and triggers its callback
+   */
+  function _emitCallback() {
+    /*jshint validthis:true */
+    let parent = this.__p;
+
+    if (parent) {
+      if (parent instanceof SaphirObject) {
+        if (parent.__cb[this.__pk]) {
+          parent.__cb[this.__pk](this);
+        }
+      } else {
+        if (parent.__cb) {
+          parent.__cb(parent);
+        }
+      }
+
+      parent.__ecb();
+    }
   }
 
   /**
@@ -65,9 +95,6 @@
     }
   }
 
-  /**
-   * [ArrayPrototype description]
-   */
   let ArrayPrototype = function() {};
   ArrayPrototype.prototype = {};
 
@@ -93,21 +120,21 @@
   }
 
   class SaphirArrayDescriptor extends SaphirDescriptor {
-    constructor(observable, key) {
+    constructor(key) {
       super();
 
       this.get = function() {
-        return observable.__value[key];
+        return this.__value[key];
       };
 
       this.set = function(newValue) {
-        let value = observable.__value[key];
+        let value = this.__value[key];
 
         if (newValue !== value) {
-          observable.__value[key] = _convertToSaphir(newValue);
+          this.__value[key] = _convertToSaphir(newValue, this);
 
-          if (observable.__cb) {
-            observable.__cb(observable);
+          if (this.__cb) {
+            this.__cb(this);
           }
         }
       };
@@ -115,7 +142,7 @@
   }
 
   class SaphirObjectDescriptor extends SaphirDescriptor {
-    constructor(value, callbacks, key) {
+    constructor(value, key) {
       super();
 
       this.get = function() {
@@ -124,28 +151,45 @@
 
       this.set = function(newValue) {
         if (newValue !== value) {
-          let oldValue = value;
 
-          value = _convertToSaphir(newValue);
+          value = _convertToSaphir(newValue, this, key);
 
-          if (callbacks[key]) {
-            callbacks[key](value, oldValue);
+          if (this.__cb[key]) {
+            this.__cb[key](value);
           }
+
+          this.__ecb();
         }
       };
     }
   }
 
   class SaphirArray extends ArrayPrototype {
-    constructor(model) {
+    constructor(model, parent) {
       super();
 
       Object.defineProperty(
         this,
-        '__cb',
+        '__p', // parent
+        {
+          writable: true,
+          value: parent
+        });
+
+      Object.defineProperty(
+        this,
+        '__cb', // callback
         {
           writable: true,
           value: {}
+        });
+
+      Object.defineProperty(
+        this,
+        '__ecb', // emit callback
+        {
+          writable: false,
+          value: _emitCallback
         });
 
       Object.defineProperty(
@@ -158,30 +202,30 @@
 
       Object.defineProperty(
         this,
-        'updateKeys',
-        {
-          value: function(model = this.__value) {
-            for (let key in model) {
-              this.__value[key] = _convertToSaphir(model[key]);
-
-              Object.defineProperty(
-                this,
-                key,
-                new SaphirArrayDescriptor(this, key));
-            }
-          }
-        });
-
-      this.updateKeys(model);
-
-      Object.defineProperty(
-        this,
         'length',
         {
           get() {
             return this.__value.length;
           }
         });
+
+      Object.defineProperty(
+        this,
+        'updateKeys',
+        {
+          value: function(model = this.__value) {
+            for (let key in model) {
+              this.__value[key] = _convertToSaphir(model[key], this);
+
+              Object.defineProperty(
+                this,
+                key,
+                new SaphirArrayDescriptor(key));
+            }
+          }
+        });
+
+      this.updateKeys(model);
     }
 
     subscribe(callback) {
@@ -196,23 +240,47 @@
   }
 
   class SaphirObject {
-    constructor(model) {
+    constructor(model, parent, parentKey) {
       Object.defineProperty(
         this,
-        '__cb',
+        '__p', // parent
+        {
+          writable: true,
+          value: parent
+        });
+
+      Object.defineProperty(
+        this,
+        '__pk', // parent key
+        {
+          writable: true,
+          value: parentKey
+        });
+
+      Object.defineProperty(
+        this,
+        '__cb', // callback
         {
           writable: true,
           value: {}
         });
 
+      Object.defineProperty(
+        this,
+        '__ecb', // emit callback
+        {
+          writable: false,
+          value: _emitCallback
+        });
+
       let value;
       for (let key in model) {
-        value = _convertToSaphir(model[key]);
+        value = _convertToSaphir(model[key], this, key);
 
         Object.defineProperty(
           this,
           key,
-          new SaphirObjectDescriptor(value, this.__cb, key));
+          new SaphirObjectDescriptor(value, key));
       }
     }
 

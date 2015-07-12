@@ -59,7 +59,9 @@ gulp.task('test', ['prepare-test'], function() {
   };
 
   return gulp.src(PATH.TEST + '*.spec.js')
-    .pipe(jasmine())
+    .pipe(jasmine({
+      includeStackTrace: true
+    }))
     .on('error', cleanup)
     .on('end', cleanup);
 });

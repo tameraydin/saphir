@@ -80,7 +80,7 @@ describe('saphir', function() {
 
       observableObj.a = 3;
       expect(fake.callback.calls.count()).toEqual(2);
-      expect(fake.callback.calls.argsFor(1)).toEqual([3, 2]);
+      expect(fake.callback.calls.argsFor(1)).toEqual([3]);
 
       observableObj.b = 1;
       expect(fake.callback.calls.count()).toEqual(2);
@@ -149,13 +149,6 @@ describe('saphir', function() {
             g: 1
           }
         }));
-      expect(fake.callback.calls.argsFor(0)[1]).toEqual(
-        new SaphirObject({
-          c: 2,
-          d: {
-            e: 3
-          }
-        }));
 
       observableObj.b.f = 3;
       expect(fake.callback.calls.count()).toEqual(2);
@@ -216,24 +209,24 @@ describe('saphir', function() {
       expect(fake.callback.calls.count()).toEqual(3);
       expect(observableArr.length).toBe(2);
 
-      // observableArr[1].a = 1;
-      // expect(fake.callback.calls.count()).toEqual(4);
-      // expect(fake.callback.calls.argsFor(3)).toEqual([observableArr]);
+      observableArr[1].a = 1;
+      expect(fake.callback.calls.count()).toEqual(4);
+      expect(fake.callback.calls.argsFor(3)).toEqual([observableArr]);
 
-      // observableArr[1].subscribe('a', function() {
-      //   fake.callback.apply(this, arguments);
-      // });
-      // observableArr[1].a = 0;
-      // expect(fake.callback.calls.count()).toEqual(6);
-      // expect(fake.callback.calls.argsFor(4)).toEqual([0, 1]);
-      // expect(fake.callback.calls.argsFor(5)).toEqual([observableArr]);
+      observableArr[1].subscribe('a', function() {
+        fake.callback.apply(this, arguments);
+      });
+      observableArr[1].a = 0;
+      expect(fake.callback.calls.count()).toEqual(6);
+      expect(fake.callback.calls.argsFor(4)).toEqual([0]);
+      expect(fake.callback.calls.argsFor(5)).toEqual([observableArr]);
 
-      // observableArr[1].a = {b: 1}; // 8 calls
-      // observableArr[1].a.subscribe('b', function() {
-      //   fake.callback.apply(this, arguments);
-      // });
-      // observableArr[1].a.b = 2;
-      // expect(fake.callback.calls.count()).toEqual(11);
+      observableArr[1].a = {b: 1}; // 8 calls
+      observableArr[1].a.subscribe('b', function() {
+        fake.callback.apply(this, arguments);
+      });
+      observableArr[1].a.b = 2;
+      expect(fake.callback.calls.count()).toEqual(11);
     });
   });
 });
