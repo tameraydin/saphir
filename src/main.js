@@ -14,7 +14,7 @@
       return value;
 
     } else if (value instanceof Array) {
-      return new SaphirArray(value, parent);
+      return new SaphirArray(value, parent, parentKey);
 
     } else if (_isObject(value)) {
       return new SaphirObject(value, parent, parentKey);
@@ -109,6 +109,7 @@
         if (this.__cb) {
           this.__cb(this);
         }
+        this.__ecb();
       };
     });
 
@@ -136,6 +137,8 @@
           if (this.__cb) {
             this.__cb(this);
           }
+
+          this.__ecb();
         }
       };
     }
@@ -165,7 +168,7 @@
   }
 
   class SaphirArray extends ArrayPrototype {
-    constructor(model, parent) {
+    constructor(model, parent, parentKey) {
       super();
 
       Object.defineProperty(
@@ -178,10 +181,18 @@
 
       Object.defineProperty(
         this,
+        '__pk', // parent
+        {
+          writable: true,
+          value: parentKey
+        });
+
+      Object.defineProperty(
+        this,
         '__cb', // callback
         {
           writable: true,
-          value: {}
+          value: null
         });
 
       Object.defineProperty(

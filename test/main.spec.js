@@ -229,4 +229,34 @@ describe('saphir', function() {
       expect(fake.callback.calls.count()).toEqual(11);
     });
   });
+
+  describe('mixed objects', function() {
+    beforeEach(function() {
+      observableObj = new SaphirObject({
+        a: 1,
+        b: [2, 3]
+      });
+      observableObj.subscribe('b', function() {
+        fake.callback.apply(this, arguments);
+      });
+      observableObj.b.subscribe(function() {
+        fake.callback.apply(this, arguments);
+      });
+      spyOn(fake, 'callback').and.callThrough();
+    });
+
+    it('subscription should work', function() {
+      var c = new SaphirObject({d: 4});
+      c.subscribe('d', function() {
+        fake.callback.apply(this, arguments);
+      });
+
+      observableObj.b.push(c);
+      expect(fake.callback.calls.count()).toEqual(2);
+      expect(fake.callback.calls.argsFor(0)).toEqual([observableObj.b]);
+
+      // observableObj.b[2].d = 5;
+      // expect(fake.callback.calls.count()).toEqual(5);
+    });
+  });
 });
