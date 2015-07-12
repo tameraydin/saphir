@@ -1,7 +1,7 @@
 (function() {
   'use strict';
 
-  function _convertToSaphir(value, parent) {
+  function _convertToSaphir(value) {
     if (_isSaphirObject(value)) {
       return value;
 
@@ -9,7 +9,7 @@
       return new SaphirArray(value);
 
     } else if (_isObject(value)) {
-      return new SaphirObject(value, parent);
+      return new SaphirObject(value);
     }
 
     return value;
@@ -126,14 +126,10 @@
         if (newValue !== value) {
           let oldValue = value;
 
-          value = _convertToSaphir(newValue, [key, callbacks]);
+          value = _convertToSaphir(newValue);
 
           if (callbacks[key]) {
             callbacks[key](value, oldValue);
-          }
-
-          if (this.__prcb && this.__prcb[this.__prk]) {
-            this.__prcb[this.__prk]();
           }
         }
       };
@@ -200,7 +196,7 @@
   }
 
   class SaphirObject {
-    constructor(model, parent) {
+    constructor(model) {
       Object.defineProperty(
         this,
         '__cb',
@@ -209,25 +205,9 @@
           value: {}
         });
 
-      if (parent) {
-        Object.defineProperty(
-          this,
-          '__prk', // outer parent key
-          {
-            value: parent[0]
-          });
-
-        Object.defineProperty(
-          this,
-          '__prcb', // outer parent callbacks
-          {
-            value: parent[1]
-          });
-      }
-
       let value;
       for (let key in model) {
-        value = _convertToSaphir(model[key], parent || [key, this.__cb]);
+        value = _convertToSaphir(model[key]);
 
         Object.defineProperty(
           this,
