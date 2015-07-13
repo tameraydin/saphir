@@ -24,9 +24,11 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
    */
   function _convertToSaphir(value, parent, parentKey) {
     if (_isSaphirObject(value)) {
+      value.__p = parent;
+      value.__pk = parentKey;
       return value;
     } else if (value instanceof Array) {
-      return new SaphirArray(value, parent);
+      return new SaphirArray(value, parent, parentKey);
     } else if (_isObject(value)) {
       return new SaphirObject(value, parent, parentKey);
     }
@@ -110,6 +112,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
       if (this.__cb) {
         this.__cb(this);
       }
+      this.__ecb();
     };
   });
 
@@ -139,6 +142,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
           if (this.__cb) {
             this.__cb(this);
           }
+
+          this.__ecb();
         }
       };
     }
@@ -178,7 +183,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
   })(SaphirDescriptor);
 
   var SaphirArray = (function (_ArrayPrototype) {
-    function SaphirArray(model, parent) {
+    function SaphirArray(model, parent, parentKey) {
       _classCallCheck(this, SaphirArray);
 
       _get(Object.getPrototypeOf(SaphirArray.prototype), 'constructor', this).call(this);
@@ -189,10 +194,16 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         value: parent
       });
 
+      Object.defineProperty(this, '__pk', // parent
+      {
+        writable: true,
+        value: parentKey
+      });
+
       Object.defineProperty(this, '__cb', // callback
       {
         writable: true,
-        value: {}
+        value: null
       });
 
       Object.defineProperty(this, '__ecb', // emit callback
@@ -217,7 +228,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
           var model = arguments.length <= 0 || arguments[0] === undefined ? this.__value : arguments[0];
 
           for (var key in model) {
-            this.__value[key] = _convertToSaphir(model[key], this);
+            this.__value[key] = _convertToSaphir(model[key], this, key);
 
             Object.defineProperty(this, key, new SaphirArrayDescriptor(key));
           }
