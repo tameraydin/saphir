@@ -11,6 +11,8 @@
    */
   function _convertToSaphir(value, parent, parentKey) {
     if (_isSaphirObject(value)) {
+      value.__p = parent;
+      value.__pk = parentKey;
       return value;
 
     } else if (value instanceof Array) {
@@ -226,7 +228,7 @@
         {
           value: function(model = this.__value) {
             for (let key in model) {
-              this.__value[key] = _convertToSaphir(model[key], this);
+              this.__value[key] = _convertToSaphir(model[key], this, key);
 
               Object.defineProperty(
                 this,

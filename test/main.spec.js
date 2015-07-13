@@ -255,8 +255,8 @@ describe('saphir', function() {
       expect(fake.callback.calls.count()).toEqual(2);
       expect(fake.callback.calls.argsFor(0)).toEqual([observableObj.b]);
 
-      // observableObj.b[2].d = 5;
-      // expect(fake.callback.calls.count()).toEqual(5);
+      observableObj.b[2].d = 5;
+      expect(fake.callback.calls.count()).toEqual(5);
     });
   });
 });
