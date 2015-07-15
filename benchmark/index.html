@@ -1,0 +1,105 @@
+<html>
+<head>
+  <title>Observation Benchmarks</title>
+  <meta charset="utf-8">
+  <script src="benchmark.js"></script>
+  <script src="../dist/saphir.js"></script>
+  <script src="observe.js"></script>
+</head>
+<body>
+
+  <table>
+    <tr>
+      <td></td>
+    </tr>
+  </table>
+
+  <script>
+    var suiteIndex = 0;
+    var suites = [];
+
+    var errorHandler = function(event) {
+      console.log('Oops', event.target.error);
+    };
+
+    var cycleHandler = function(event) {
+      console.log(String(event.target));
+    };
+
+    var startHandler = function(suiteName) {
+      console.log('Started: ' + suiteName);
+    };
+
+    var completeHandler = function() {
+      console.log('Fastest is ' + this.filter('fastest').pluck('name'));
+      suiteIndex++;
+
+      if (suites[suiteIndex]) {
+        suites[suiteIndex].run({async: true});
+      }
+    };
+
+    var observable1, observable2;
+
+    suites[0] = new Benchmark.Suite('getter/setter');
+    suites[0]
+      .on('start', function() {
+        startHandler(this.name);
+        // saphir:
+        // var testValue;
+
+        var obj1 = {a: 1, b: 2};
+        observable1 = new saphir.SaphirObject(obj1);
+        // observable1.subscribe('a', function(value) {
+        //   testValue = value;
+        // });
+
+        // observable js:
+        observable2 = {a: 1, b: 2};
+        // var observer = new ObjectObserver(observable2);
+        // observer.open(function(added, removed, changed) {
+        //   Object.keys(changed).forEach(function(property) {
+        //     testValue = changed[property];
+        //   });
+        // });
+      })
+      .add('Saphir', function() {
+        observable1.a = 4;
+        var anotherVal = observable1.a + 1;
+      })
+      .add('Native', function() {
+        observable2.a = 4;
+        var anotherVal = observable2.a + 1;
+      })
+      .on('error', errorHandler)
+      .on('cycle', cycleHandler)
+      .on('complete', completeHandler)
+      .run({ 'async': true });
+
+
+    suites[1] = new Benchmark.Suite('key iteration');
+    suites[1]
+      .on('start', function() {
+        startHandler(this.name);
+
+        var obj = {a: 1, b: 2};
+        observable1 = new saphir.SaphirObject(obj);
+        observable2 = {a: 1, b: 2};
+      })
+      .add('Saphir', function() {
+        Object.keys(observable1).forEach(function(key, ind) {
+          observable1[key] = ind;
+        });
+      })
+      .add('Native', function() {
+        Object.keys(observable2).forEach(function(key, ind) {
+          observable2[key] = ind;
+        });
+      })
+      .on('error', errorHandler)
+      .on('cycle', cycleHandler)
+      .on('complete', completeHandler);
+
+  </script>
+</body>
+</html>
