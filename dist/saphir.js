@@ -18,19 +18,15 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
    * Converts given value into a Saphir object/array
    *
    * @param  {Any}
-   * @param  {Object}
-   * @param  {String}
-   * @return {Any}
+   * @return {SaphirObject|SaphirArray}
    */
-  function _convertToSaphir(value, parent, parentKey) {
+  function _convertToSaphir(value) {
     if (_isSaphirObject(value)) {
-      value.__p = parent;
-      value.__pk = parentKey;
       return value;
     } else if (value instanceof Array) {
-      return new SaphirArray(value, parent, parentKey);
+      return new SaphirArray(value);
     } else if (_isObject(value)) {
-      return new SaphirObject(value, parent, parentKey);
+      return new SaphirObject(value);
     }
 
     return value;
@@ -54,28 +50,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
    */
   function _isObject(value) {
     return value instanceof Object && Object.getPrototypeOf(value) === Object.prototype;
-  }
-
-  /**
-   * Informs updated object's parents and triggers its callback
-   */
-  function _emitCallback() {
-    /*jshint validthis:true */
-    var parent = this.__p;
-
-    if (parent) {
-      if (parent instanceof SaphirObject) {
-        if (parent.__cb[this.__pk]) {
-          parent.__cb[this.__pk](this);
-        }
-      } else {
-        if (parent.__cb) {
-          parent.__cb(parent);
-        }
-      }
-
-      parent.__ecb();
-    }
   }
 
   /**
@@ -112,7 +86,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
       if (this.__cb) {
         this.__cb(this);
       }
-      this.__ecb();
     };
   });
 
@@ -124,37 +97,37 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
   };
 
   var SaphirArrayDescriptor = (function (_SaphirDescriptor) {
-    function SaphirArrayDescriptor(key) {
+    _inherits(SaphirArrayDescriptor, _SaphirDescriptor);
+
+    function SaphirArrayDescriptor(observable, key) {
       _classCallCheck(this, SaphirArrayDescriptor);
 
       _get(Object.getPrototypeOf(SaphirArrayDescriptor.prototype), 'constructor', this).call(this);
 
       this.get = function () {
-        return this.__value[key];
+        return observable.__value[key];
       };
 
       this.set = function (newValue) {
-        var value = this.__value[key];
+        var value = observable.__value[key];
 
         if (newValue !== value) {
-          this.__value[key] = _convertToSaphir(newValue, this);
+          observable.__value[key] = _convertToSaphir(newValue);
 
-          if (this.__cb) {
-            this.__cb(this);
+          if (observable.__cb) {
+            observable.__cb(observable);
           }
-
-          this.__ecb();
         }
       };
     }
-
-    _inherits(SaphirArrayDescriptor, _SaphirDescriptor);
 
     return SaphirArrayDescriptor;
   })(SaphirDescriptor);
 
   var SaphirObjectDescriptor = (function (_SaphirDescriptor2) {
-    function SaphirObjectDescriptor(value, key) {
+    _inherits(SaphirObjectDescriptor, _SaphirDescriptor2);
+
+    function SaphirObjectDescriptor(value, callbacks, key) {
       _classCallCheck(this, SaphirObjectDescriptor);
 
       _get(Object.getPrototypeOf(SaphirObjectDescriptor.prototype), 'constructor', this).call(this);
@@ -165,51 +138,31 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
       this.set = function (newValue) {
         if (newValue !== value) {
+          var oldValue = value;
 
-          value = _convertToSaphir(newValue, this, key);
+          value = _convertToSaphir(newValue);
 
-          if (this.__cb[key]) {
-            this.__cb[key](value);
+          if (callbacks[key]) {
+            callbacks[key](value, oldValue);
           }
-
-          this.__ecb();
         }
       };
     }
-
-    _inherits(SaphirObjectDescriptor, _SaphirDescriptor2);
 
     return SaphirObjectDescriptor;
   })(SaphirDescriptor);
 
   var SaphirArray = (function (_ArrayPrototype) {
-    function SaphirArray(model, parent, parentKey) {
+    _inherits(SaphirArray, _ArrayPrototype);
+
+    function SaphirArray(model) {
       _classCallCheck(this, SaphirArray);
 
       _get(Object.getPrototypeOf(SaphirArray.prototype), 'constructor', this).call(this);
 
-      Object.defineProperty(this, '__p', // parent
-      {
+      Object.defineProperty(this, '__cb', {
         writable: true,
-        value: parent
-      });
-
-      Object.defineProperty(this, '__pk', // parent
-      {
-        writable: true,
-        value: parentKey
-      });
-
-      Object.defineProperty(this, '__cb', // callback
-      {
-        writable: true,
-        value: null
-      });
-
-      Object.defineProperty(this, '__ecb', // emit callback
-      {
-        writable: false,
-        value: _emitCallback
+        value: {}
       });
 
       Object.defineProperty(this, '__value', {
@@ -217,28 +170,26 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         value: []
       });
 
-      Object.defineProperty(this, 'length', {
-        get: function get() {
-          return this.__value.length;
-        }
-      });
-
       Object.defineProperty(this, 'updateKeys', {
         value: function value() {
           var model = arguments.length <= 0 || arguments[0] === undefined ? this.__value : arguments[0];
 
           for (var key in model) {
-            this.__value[key] = _convertToSaphir(model[key], this, key);
+            this.__value[key] = _convertToSaphir(model[key]);
 
-            Object.defineProperty(this, key, new SaphirArrayDescriptor(key));
+            Object.defineProperty(this, key, new SaphirArrayDescriptor(this, key));
           }
         }
       });
 
       this.updateKeys(model);
-    }
 
-    _inherits(SaphirArray, _ArrayPrototype);
+      Object.defineProperty(this, 'length', {
+        get: function get() {
+          return this.__value.length;
+        }
+      });
+    }
 
     _createClass(SaphirArray, [{
       key: 'subscribe',
@@ -258,38 +209,19 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
   })(ArrayPrototype);
 
   var SaphirObject = (function () {
-    function SaphirObject(model, parent, parentKey) {
+    function SaphirObject(model) {
       _classCallCheck(this, SaphirObject);
 
-      Object.defineProperty(this, '__p', // parent
-      {
-        writable: true,
-        value: parent
-      });
-
-      Object.defineProperty(this, '__pk', // parent key
-      {
-        writable: true,
-        value: parentKey
-      });
-
-      Object.defineProperty(this, '__cb', // callback
-      {
+      Object.defineProperty(this, '__cb', {
         writable: true,
         value: {}
       });
 
-      Object.defineProperty(this, '__ecb', // emit callback
-      {
-        writable: false,
-        value: _emitCallback
-      });
-
       var value = undefined;
       for (var key in model) {
-        value = _convertToSaphir(model[key], this, key);
+        value = _convertToSaphir(model[key]);
 
-        Object.defineProperty(this, key, new SaphirObjectDescriptor(value, key));
+        Object.defineProperty(this, key, new SaphirObjectDescriptor(value, this.__cb, key));
       }
     }
 

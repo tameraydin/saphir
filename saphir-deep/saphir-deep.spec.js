@@ -80,7 +80,7 @@ describe('saphir', function() {
 
       observableObj.a = 3;
       expect(fake.callback.calls.count()).toEqual(2);
-      expect(fake.callback.calls.argsFor(1)).toEqual([3, 2]);
+      expect(fake.callback.calls.argsFor(1)).toEqual([3]);
 
       observableObj.b = 1;
       expect(fake.callback.calls.count()).toEqual(2);
@@ -110,6 +110,9 @@ describe('saphir', function() {
           }
         }
       });
+      observableObj.subscribe('a', function() {
+        fake.callback.apply(this, arguments);
+      });
       observableObj.subscribe('b', function() {
         fake.callback.apply(this, arguments);
       });
@@ -123,7 +126,12 @@ describe('saphir', function() {
     it('subscribtion should work', function() {
       expect(fake.callback).not.toHaveBeenCalled();
 
-      observableObj.b = 2;
+      observableObj.a = 4;
+      expect(fake.callback).toHaveBeenCalled();
+    });
+
+    it('subscribtion should be able to observe inner objects', function() {
+      observableObj.b.d = 5;
       expect(fake.callback).toHaveBeenCalled();
     });
 
@@ -141,13 +149,9 @@ describe('saphir', function() {
             g: 1
           }
         }));
-      expect(fake.callback.calls.argsFor(0)[1]).toEqual(
-        new SaphirObject({
-          c: 2,
-          d: {
-            e: 3
-          }
-        }));
+
+      observableObj.b.f = 3;
+      expect(fake.callback.calls.count()).toEqual(2);
     });
   });
 
@@ -205,24 +209,54 @@ describe('saphir', function() {
       expect(fake.callback.calls.count()).toEqual(3);
       expect(observableArr.length).toBe(2);
 
-      // observableArr[1].a = 1;
-      // expect(fake.callback.calls.count()).toEqual(4);
-      // expect(fake.callback.calls.argsFor(3)).toEqual([observableArr]);
+      observableArr[1].a = 1;
+      expect(fake.callback.calls.count()).toEqual(4);
+      expect(fake.callback.calls.argsFor(3)).toEqual([observableArr]);
 
-      // observableArr[1].subscribe('a', function() {
-      //   fake.callback.apply(this, arguments);
-      // });
-      // observableArr[1].a = 0;
-      // expect(fake.callback.calls.count()).toEqual(6);
-      // expect(fake.callback.calls.argsFor(4)).toEqual([0, 1]);
-      // expect(fake.callback.calls.argsFor(5)).toEqual([observableArr]);
+      observableArr[1].subscribe('a', function() {
+        fake.callback.apply(this, arguments);
+      });
+      observableArr[1].a = 0;
+      expect(fake.callback.calls.count()).toEqual(6);
+      expect(fake.callback.calls.argsFor(4)).toEqual([0]);
+      expect(fake.callback.calls.argsFor(5)).toEqual([observableArr]);
 
-      // observableArr[1].a = {b: 1}; // 8 calls
-      // observableArr[1].a.subscribe('b', function() {
-      //   fake.callback.apply(this, arguments);
-      // });
-      // observableArr[1].a.b = 2;
-      // expect(fake.callback.calls.count()).toEqual(11);
+      observableArr[1].a = {b: 1}; // 8 calls
+      observableArr[1].a.subscribe('b', function() {
+        fake.callback.apply(this, arguments);
+      });
+      observableArr[1].a.b = 2;
+      expect(fake.callback.calls.count()).toEqual(11);
+    });
+  });
+
+  describe('mixed objects', function() {
+    beforeEach(function() {
+      observableObj = new SaphirObject({
+        a: 1,
+        b: [2, 3]
+      });
+      observableObj.subscribe('b', function() {
+        fake.callback.apply(this, arguments);
+      });
+      observableObj.b.subscribe(function() {
+        fake.callback.apply(this, arguments);
+      });
+      spyOn(fake, 'callback').and.callThrough();
+    });
+
+    it('subscription should work', function() {
+      var c = new SaphirObject({d: 4});
+      c.subscribe('d', function() {
+        fake.callback.apply(this, arguments);
+      });
+
+      observableObj.b.push(c);
+      expect(fake.callback.calls.count()).toEqual(2);
+      expect(fake.callback.calls.argsFor(0)).toEqual([observableObj.b]);
+
+      observableObj.b[2].d = 5;
+      expect(fake.callback.calls.count()).toEqual(5);
     });
   });
 });
