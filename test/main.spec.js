@@ -116,38 +116,11 @@ describe('saphir', function() {
       spyOn(fake, 'callback').and.callThrough();
     });
 
-    it('should be converted to SaphirObject', function() {
-      expect(observableObj.b.d.subscribe).toBeDefined();
-    });
-
     it('subscribtion should work', function() {
       expect(fake.callback).not.toHaveBeenCalled();
 
       observableObj.b = 2;
       expect(fake.callback).toHaveBeenCalled();
-    });
-
-    it('should convert its new Object value to SaphirObject', function() {
-      observableObj.b = {
-        f: {
-          g: 1
-        }
-      };
-
-      expect(observableObj.b.f.subscribe).toBeDefined();
-      expect(fake.callback.calls.argsFor(0)[0]).toEqual(
-        new SaphirObject({
-          f: {
-            g: 1
-          }
-        }));
-      expect(fake.callback.calls.argsFor(0)[1]).toEqual(
-        new SaphirObject({
-          c: 2,
-          d: {
-            e: 3
-          }
-        }));
     });
   });
 
@@ -204,25 +177,6 @@ describe('saphir', function() {
       observableArr.splice(2, 2);
       expect(fake.callback.calls.count()).toEqual(3);
       expect(observableArr.length).toBe(2);
-
-      // observableArr[1].a = 1;
-      // expect(fake.callback.calls.count()).toEqual(4);
-      // expect(fake.callback.calls.argsFor(3)).toEqual([observableArr]);
-
-      // observableArr[1].subscribe('a', function() {
-      //   fake.callback.apply(this, arguments);
-      // });
-      // observableArr[1].a = 0;
-      // expect(fake.callback.calls.count()).toEqual(6);
-      // expect(fake.callback.calls.argsFor(4)).toEqual([0, 1]);
-      // expect(fake.callback.calls.argsFor(5)).toEqual([observableArr]);
-
-      // observableArr[1].a = {b: 1}; // 8 calls
-      // observableArr[1].a.subscribe('b', function() {
-      //   fake.callback.apply(this, arguments);
-      // });
-      // observableArr[1].a.b = 2;
-      // expect(fake.callback.calls.count()).toEqual(11);
     });
   });
 });

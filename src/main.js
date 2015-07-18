@@ -96,21 +96,21 @@
   }
 
   class SaphirArrayDescriptor extends SaphirDescriptor {
-    constructor(observable, key) {
+    constructor(key) {
       super();
 
       this.get = function() {
-        return observable.__value[key];
+        return this.__value[key];
       };
 
       this.set = function(newValue) {
-        let value = observable.__value[key];
+        let value = this.__value[key];
 
         if (newValue !== value) {
-          observable.__value[key] = _convertToSaphir(newValue);
+          this.__value[key] = newValue;
 
-          if (observable.__cb) {
-            observable.__cb(observable);
+          if (this.__cb) {
+            this.__cb(this);
           }
         }
       };
@@ -118,7 +118,7 @@
   }
 
   class SaphirObjectDescriptor extends SaphirDescriptor {
-    constructor(value, callbacks, key) {
+    constructor(value, key) {
       super();
 
       this.get = function() {
@@ -129,10 +129,10 @@
         if (newValue !== value) {
           let oldValue = value;
 
-          value = _convertToSaphir(newValue);
+          value = newValue;
 
-          if (callbacks[key]) {
-            callbacks[key](value, oldValue);
+          if (this.__cb[key]) {
+            this.__cb[key](value, oldValue);
           }
         }
       };
@@ -161,6 +161,15 @@
 
       Object.defineProperty(
         this,
+        'length',
+        {
+          get() {
+            return this.__value.length;
+          }
+        });
+
+      Object.defineProperty(
+        this,
         'updateKeys',
         {
           value: function(model = this.__value) {
@@ -170,21 +179,12 @@
               Object.defineProperty(
                 this,
                 key,
-                new SaphirArrayDescriptor(this, key));
+                new SaphirArrayDescriptor(key));
             }
           }
         });
 
       this.updateKeys(model);
-
-      Object.defineProperty(
-        this,
-        'length',
-        {
-          get() {
-            return this.__value.length;
-          }
-        });
     }
 
     subscribe(callback) {
@@ -215,7 +215,7 @@
         Object.defineProperty(
           this,
           key,
-          new SaphirObjectDescriptor(value, this.__cb, key));
+          new SaphirObjectDescriptor(value, key));
       }
     }
 

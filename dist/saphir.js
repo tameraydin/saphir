@@ -99,23 +99,23 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
   var SaphirArrayDescriptor = (function (_SaphirDescriptor) {
     _inherits(SaphirArrayDescriptor, _SaphirDescriptor);
 
-    function SaphirArrayDescriptor(observable, key) {
+    function SaphirArrayDescriptor(key) {
       _classCallCheck(this, SaphirArrayDescriptor);
 
       _get(Object.getPrototypeOf(SaphirArrayDescriptor.prototype), 'constructor', this).call(this);
 
       this.get = function () {
-        return observable.__value[key];
+        return this.__value[key];
       };
 
       this.set = function (newValue) {
-        var value = observable.__value[key];
+        var value = this.__value[key];
 
         if (newValue !== value) {
-          observable.__value[key] = _convertToSaphir(newValue);
+          this.__value[key] = newValue;
 
-          if (observable.__cb) {
-            observable.__cb(observable);
+          if (this.__cb) {
+            this.__cb(this);
           }
         }
       };
@@ -127,7 +127,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
   var SaphirObjectDescriptor = (function (_SaphirDescriptor2) {
     _inherits(SaphirObjectDescriptor, _SaphirDescriptor2);
 
-    function SaphirObjectDescriptor(value, callbacks, key) {
+    function SaphirObjectDescriptor(value, key) {
       _classCallCheck(this, SaphirObjectDescriptor);
 
       _get(Object.getPrototypeOf(SaphirObjectDescriptor.prototype), 'constructor', this).call(this);
@@ -140,10 +140,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         if (newValue !== value) {
           var oldValue = value;
 
-          value = _convertToSaphir(newValue);
+          value = newValue;
 
-          if (callbacks[key]) {
-            callbacks[key](value, oldValue);
+          if (this.__cb[key]) {
+            this.__cb[key](value, oldValue);
           }
         }
       };
@@ -170,6 +170,12 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         value: []
       });
 
+      Object.defineProperty(this, 'length', {
+        get: function get() {
+          return this.__value.length;
+        }
+      });
+
       Object.defineProperty(this, 'updateKeys', {
         value: function value() {
           var model = arguments.length <= 0 || arguments[0] === undefined ? this.__value : arguments[0];
@@ -177,18 +183,12 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
           for (var key in model) {
             this.__value[key] = _convertToSaphir(model[key]);
 
-            Object.defineProperty(this, key, new SaphirArrayDescriptor(this, key));
+            Object.defineProperty(this, key, new SaphirArrayDescriptor(key));
           }
         }
       });
 
       this.updateKeys(model);
-
-      Object.defineProperty(this, 'length', {
-        get: function get() {
-          return this.__value.length;
-        }
-      });
     }
 
     _createClass(SaphirArray, [{
@@ -221,7 +221,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
       for (var key in model) {
         value = _convertToSaphir(model[key]);
 
-        Object.defineProperty(this, key, new SaphirObjectDescriptor(value, this.__cb, key));
+        Object.defineProperty(this, key, new SaphirObjectDescriptor(value, key));
       }
     }
 
