@@ -2,6 +2,10 @@
 
 [Experimental] Object/Array observation library.
 
+```bash
+npm install saphir
+```
+
 ```javascript
 var observable = new SaphirObject(
   {a: 1}
