@@ -2,36 +2,91 @@
 <head>
   <title>Observation Benchmarks</title>
   <meta charset="utf-8">
+
+  <style>
+    * {
+      font-family: sans-serif;
+    }
+    table {
+      table-layout: fixed;
+      border-collapse: collapse;
+    }
+    table, th, td {
+      border: 1px dotted #000;
+    }
+    th, td {
+      padding: 10px;
+    }
+    .winner {
+      background: #00CC33;
+    }
+  </style>
+  <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.0/lodash.min.js"></script>
   <script src="benchmark.js"></script>
   <script src="../dist/saphir.js"></script>
   <script src="observe.js"></script>
 </head>
 <body>
 
-  <table>
-    <tr>
-      <td></td>
-    </tr>
+  <h2>Native Operations</h2>
+  <table id="benchmark-table-1">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Saphir</th>
+        <th>Native</th>
+      </tr>
+    </thead>
+    <tbody>
+
+    </tbody>
+  </table>
+
+  <h2>Observation</h2>
+  <table id="benchmark-table-2">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Saphir</th>
+        <th>observe.js</th>
+      </tr>
+    </thead>
+    <tbody>
+
+    </tbody>
   </table>
 
   <script>
     var suiteIndex = 0;
     var suites = [];
+    var $table = $('#benchmark-table-1');
+
+    function tame(str) {
+      return _.deburr(str.toLowerCase());
+    }
 
     var errorHandler = function(event) {
       console.log('Oops', event.target.error);
     };
 
     var cycleHandler = function(event) {
-      console.log(String(event.target));
+      $table.find('tr:last')
+        .append(
+          '<td class="case-' + tame(event.target.name) + '">' +
+            String(event.target).split('x')[1] +
+          '</td>')
     };
 
-    var startHandler = function(suiteName) {
-      console.log('Started: ' + suiteName);
+    var startHandler = function(suite) {
+      $table.children('tbody').append(
+        '<tr>' +
+          '<td>' + suite.name + '</td>' +
+        '</tr>');
     };
 
     var completeHandler = function() {
-      console.log('Fastest is ' + this.filter('fastest').pluck('name'));
+      $table.find('td.case-' + tame(this.filter('fastest').pluck('name')[0])).addClass('winner');
       suiteIndex++;
 
       if (suites[suiteIndex]) {
@@ -39,29 +94,17 @@
       }
     };
 
-    var observable1, observable2;
+    var observable1, observable2, x;
 
     suites[0] = new Benchmark.Suite('getter/setter');
     suites[0]
       .on('start', function() {
-        startHandler(this.name);
-        // saphir:
-        // var testValue;
+        startHandler(this);
 
         var obj1 = {a: 1, b: 2};
         observable1 = new saphir.SaphirObject(obj1);
-        // observable1.subscribe('a', function(value) {
-        //   testValue = value;
-        // });
 
-        // observable js:
         observable2 = {a: 1, b: 2};
-        // var observer = new ObjectObserver(observable2);
-        // observer.open(function(added, removed, changed) {
-        //   Object.keys(changed).forEach(function(property) {
-        //     testValue = changed[property];
-        //   });
-        // });
       })
       .add('Saphir', function() {
         observable1.a = 4;
@@ -80,7 +123,7 @@
     suites[1] = new Benchmark.Suite('key iteration');
     suites[1]
       .on('start', function() {
-        startHandler(this.name);
+        startHandler(this);
 
         var obj = {a: 1, b: 2};
         observable1 = new saphir.SaphirObject(obj);
@@ -95,6 +138,37 @@
         Object.keys(observable2).forEach(function(key, ind) {
           observable2[key] = ind;
         });
+      })
+      .on('error', errorHandler)
+      .on('cycle', cycleHandler)
+      .on('complete', completeHandler);
+
+    suites[2] = new Benchmark.Suite('value change');
+    suites[2]
+      .on('start', function() {
+        $table = $('#benchmark-table-2');
+        startHandler(this);
+
+        var obj1 = {a: 1, b: 2};
+        observable1 = new saphir.SaphirObject(obj1);
+        observable1.subscribe('a', function(value) {
+          x = value;
+        });
+
+        // observable js:
+        observable2 = {a: 1, b: 2};
+        var observer = new ObjectObserver(observable2);
+        observer.open(function(added, removed, changed) {
+          x = changed['a'];
+        });
+      })
+      .add('Saphir', function() {
+        observable1.a = 2;
+        observable1.a = observable1.a > 100 ? 0 : x + 1;
+      })
+      .add('observe.js', function() {
+        observable2.a = 2;
+        observable2.a = observable2.a > 100 ? 0 : x + 1;
       })
       .on('error', errorHandler)
       .on('cycle', cycleHandler)
