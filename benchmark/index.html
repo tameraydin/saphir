@@ -159,7 +159,7 @@
         observable2 = {a: 1, b: 2};
         var observer = new ObjectObserver(observable2);
         observer.open(function(added, removed, changed) {
-          x = changed['a'];
+          x = changed.a;
         });
       })
       .add('Saphir', function() {
