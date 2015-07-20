@@ -16,6 +16,6 @@ observable.a = 2;
 ```
 
 #### TODO
-- [] multi subscription
-- [] add/remove observation?
-- [] more benchmarks
+- [ ] multi subscription
+- [ ] add/remove observation?
+- [ ] more benchmarks
