@@ -129,9 +129,6 @@ describe('saphir', function() {
       observableArr = new SaphirArray([1, {
         a: 2
       }, 3]);
-      observableArr._subscribe(function() {
-        fake.callback.apply(this, arguments);
-      });
       spyOn(fake, 'callback').and.callThrough();
     });
 
@@ -146,6 +143,16 @@ describe('saphir', function() {
 
       observableArr[2] = 4;
       expect(observableArr[2]).toBe(4);
+
+      observableArr[5] = 5;
+      expect(observableArr.__value).toEqual([1, {a: 2}, 4]);
+    });
+
+    it('subscribtion should only accept valid parameters', function() {
+      observableArr._subscribe('a')
+      expect(observableArr.__cb).toBe(null);
+      observableArr._subscribe(function() {});
+      expect(observableArr.__cb).not.toEqual(null);
     });
 
     it('should be able to apply default Array methods', function() {
@@ -159,6 +166,9 @@ describe('saphir', function() {
     });
 
     it('subscribtion should work', function() {
+      observableArr._subscribe(function() {
+        fake.callback.apply(this, arguments);
+      });
       expect(observableArr.__cb).toBeDefined();
       expect(fake.callback).not.toHaveBeenCalled();
 

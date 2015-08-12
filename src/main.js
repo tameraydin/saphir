@@ -106,7 +106,7 @@
         '__cb',
         {
           writable: true,
-          value: {}
+          value: null
         });
 
       Object.defineProperty(
@@ -146,7 +146,9 @@
     }
 
     _subscribe(callback) {
-      this.__cb = callback;
+      if (typeof callback === 'function') {
+        this.__cb = callback;
+      }
       return this;
     }
 
