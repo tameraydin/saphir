@@ -1,5 +1,5 @@
 /**
- * saphir v0.1.0 (https://github.com/tameraydin/saphir)
+ * saphir v0.2.0 (https://github.com/tameraydin/saphir)
  * Copyright 2015 Tamer Aydin (http://tamerayd.in)
  * Licensed under MIT
  */
@@ -13,44 +13,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 (function () {
   'use strict';
-
-  /**
-   * Converts given value into a Saphir object/array
-   *
-   * @param  {Any}
-   * @return {SaphirObject|SaphirArray}
-   */
-  function _convertToSaphir(value) {
-    if (_isSaphirObject(value)) {
-      return value;
-    } else if (value instanceof Array) {
-      return new SaphirArray(value);
-    } else if (_isObject(value)) {
-      return new SaphirObject(value);
-    }
-
-    return value;
-  }
-
-  /**
-   * Determine whether the given value is a Saphir object
-   *
-   * @param  {Any}     Value
-   * @return {Boolean} Result
-   */
-  function _isSaphirObject(value) {
-    return value instanceof SaphirObject || value instanceof SaphirArray;
-  }
-
-  /**
-   * Determine whether the given value is an Object literal
-   *
-   * @param  {Any}     Value
-   * @return {Boolean} Result
-   */
-  function _isObject(value) {
-    return value instanceof Object && Object.getPrototypeOf(value) === Object.prototype;
-  }
 
   /**
    * Decorates certain type of methods in given class's
@@ -162,7 +124,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
       Object.defineProperty(this, '__cb', {
         writable: true,
-        value: {}
+        value: null
       });
 
       Object.defineProperty(this, '__value', {
@@ -181,7 +143,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
           var model = arguments.length <= 0 || arguments[0] === undefined ? this.__value : arguments[0];
 
           for (var key in model) {
-            this.__value[key] = _convertToSaphir(model[key]);
+            this.__value[key] = model[key];
 
             Object.defineProperty(this, key, new SaphirArrayDescriptor(key));
           }
@@ -192,14 +154,16 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     }
 
     _createClass(SaphirArray, [{
-      key: 'subscribe',
-      value: function subscribe(callback) {
-        this.__cb = callback;
+      key: '_subscribe',
+      value: function _subscribe(callback) {
+        if (typeof callback === 'function') {
+          this.__cb = callback;
+        }
         return this;
       }
     }, {
-      key: 'unsubscribe',
-      value: function unsubscribe() {
+      key: '_unsubscribe',
+      value: function _unsubscribe() {
         this.__cb = null;
         return this;
       }
@@ -219,23 +183,23 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
       var value = undefined;
       for (var key in model) {
-        value = _convertToSaphir(model[key]);
+        value = model[key];
 
         Object.defineProperty(this, key, new SaphirObjectDescriptor(value, key));
       }
     }
 
     _createClass(SaphirObject, [{
-      key: 'subscribe',
-      value: function subscribe(prop, callback) {
+      key: '_subscribe',
+      value: function _subscribe(prop, callback) {
         if (typeof prop === 'string' && typeof callback === 'function' && this.hasOwnProperty(prop)) {
           this.__cb[prop] = callback;
         }
         return this;
       }
     }, {
-      key: 'unsubscribe',
-      value: function unsubscribe(prop) {
+      key: '_unsubscribe',
+      value: function _unsubscribe(prop) {
         if (typeof prop === 'string' && this.__cb[prop]) {
           this.__cb[prop] = null;
         }
