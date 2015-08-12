@@ -2,48 +2,6 @@
   'use strict';
 
   /**
-   * Converts given value into a Saphir object/array
-   *
-   * @param  {Any}
-   * @return {SaphirObject|SaphirArray}
-   */
-  function _convertToSaphir(value) {
-    if (_isSaphirObject(value)) {
-      return value;
-
-    } else if (value instanceof Array) {
-      return new SaphirArray(value);
-
-    } else if (_isObject(value)) {
-      return new SaphirObject(value);
-    }
-
-    return value;
-  }
-
-  /**
-   * Determine whether the given value is a Saphir object
-   *
-   * @param  {Any}     Value
-   * @return {Boolean} Result
-   */
-  function _isSaphirObject(value) {
-    return value instanceof SaphirObject ||
-      value instanceof SaphirArray;
-  }
-
-  /**
-   * Determine whether the given value is an Object literal
-   *
-   * @param  {Any}     Value
-   * @return {Boolean} Result
-   */
-  function _isObject(value) {
-    return value instanceof Object &&
-      Object.getPrototypeOf(value) === Object.prototype;
-  }
-
-  /**
    * Decorates certain type of methods in given class's
    * prototype and assigns to given object.
    *
@@ -174,7 +132,7 @@
         {
           value: function(model = this.__value) {
             for (let key in model) {
-              this.__value[key] = _convertToSaphir(model[key]);
+              this.__value[key] = model[key];
 
               Object.defineProperty(
                 this,
@@ -210,7 +168,7 @@
 
       let value;
       for (let key in model) {
-        value = _convertToSaphir(model[key]);
+        value = model[key];
 
         Object.defineProperty(
           this,
