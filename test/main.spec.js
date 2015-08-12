@@ -137,9 +137,9 @@ describe('saphir', function() {
 
     it('accessors should work', function() {
       expect(observableArr[0]).toBe(1);
-      expect(observableArr[1]).toEqual(new SaphirObject({
+      expect(observableArr[1]).toEqual({
         a: 2
-      }));
+      });
       expect(observableArr[1].a).toBe(2);
       expect(observableArr[2]).toBe(3);
       expect(observableArr.length).toBe(3);
