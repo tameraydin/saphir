@@ -17,6 +17,9 @@
     th, td {
       padding: 10px;
     }
+    small {
+      display: none;
+    }
     .winner {
       background: #00CC33;
     }
@@ -29,7 +32,9 @@
 </head>
 <body>
 
-  <h2>Native Operations</h2>
+  <small id="running">Running...</small>
+
+  <h2>Saphir vs. Native (to see the performance trade of having custom descriptors)</h2>
   <table id="benchmark-table-1">
     <thead>
       <tr>
@@ -43,7 +48,7 @@
     </tbody>
   </table>
 
-  <h2>Observation</h2>
+  <h2>Saphir vs. observe.js</h2>
   <table id="benchmark-table-2">
     <thead>
       <tr>
@@ -61,6 +66,9 @@
     var suiteIndex = 0;
     var suites = [];
     var $table = $('#benchmark-table-1');
+    var $running = $('#running');
+
+    $running.show();
 
     function tame(str) {
       return _.deburr(str.toLowerCase());
@@ -91,6 +99,8 @@
 
       if (suites[suiteIndex]) {
         suites[suiteIndex].run({async: true});
+      } else {
+        $running.remove();
       }
     };
 
@@ -119,39 +129,15 @@
       .on('complete', completeHandler)
       .run({ 'async': true });
 
-
-    suites[1] = new Benchmark.Suite('key iteration');
+    suites[1] = new Benchmark.Suite('Object value change');
     suites[1]
-      .on('start', function() {
-        startHandler(this);
-
-        var obj = {a: 1, b: 2};
-        observable1 = new saphir.SaphirObject(obj);
-        observable2 = {a: 1, b: 2};
-      })
-      .add('Saphir', function() {
-        Object.keys(observable1).forEach(function(key, ind) {
-          observable1[key] = ind;
-        });
-      })
-      .add('Native', function() {
-        Object.keys(observable2).forEach(function(key, ind) {
-          observable2[key] = ind;
-        });
-      })
-      .on('error', errorHandler)
-      .on('cycle', cycleHandler)
-      .on('complete', completeHandler);
-
-    suites[2] = new Benchmark.Suite('value change');
-    suites[2]
       .on('start', function() {
         $table = $('#benchmark-table-2');
         startHandler(this);
 
         var obj1 = {a: 1, b: 2};
         observable1 = new saphir.SaphirObject(obj1);
-        observable1.subscribe('a', function(value) {
+        observable1._subscribe('a', function(value) {
           x = value;
         });
 
