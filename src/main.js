@@ -187,12 +187,12 @@
       this.updateKeys(model);
     }
 
-    subscribe(callback) {
+    _subscribe(callback) {
       this.__cb = callback;
       return this;
     }
 
-    unsubscribe() {
+    _unsubscribe() {
       this.__cb = null;
       return this;
     }
@@ -219,7 +219,7 @@
       }
     }
 
-    subscribe(prop, callback) {
+    _subscribe(prop, callback) {
       if (typeof prop === 'string' &&
           typeof callback === 'function' &&
           this.hasOwnProperty(prop)) {
@@ -228,7 +228,7 @@
       return this;
     }
 
-    unsubscribe(prop) {
+    _unsubscribe(prop) {
       if (typeof prop === 'string' &&
           this.__cb[prop]) {
         this.__cb[prop] = null;
