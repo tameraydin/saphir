@@ -40,6 +40,8 @@ describe('saphir', function() {
     });
 
     it('accessors should work', function() {
+      expect(Object.keys(observableObj)).toEqual(['a', 'b']);
+
       expect(observableObj.a).toBe(1);
       expect(observableObj.b).toBe(2);
 
@@ -153,6 +155,18 @@ describe('saphir', function() {
       expect(observableArr.__cb).toBe(null);
       observableArr._subscribe(function() {});
       expect(observableArr.__cb).not.toEqual(null);
+    });
+
+    it('unsubscribtion should work', function() {
+      observableArr._subscribe(function() {
+        fake.callback.apply(this, arguments);
+      });
+
+      observableArr._unsubscribe();
+
+      observableArr[0] = 5;
+      expect(fake.callback).not.toHaveBeenCalled();
+      expect(observableArr.__cb).toBe(null);
     });
 
     it('should be able to apply default Array methods', function() {
