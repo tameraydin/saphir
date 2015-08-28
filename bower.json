@@ -7,7 +7,13 @@
     "type": "git",
     "url": "https://github.com/tameraydin/saphir.git"
   },
-  "keywords": [],
+  "keywords": [
+    "object",
+    "array",
+    "observable",
+    "observation",
+    "watch"
+  ],
   "ignore": [
     "node_modules",
     "coverage",

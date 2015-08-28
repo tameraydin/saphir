@@ -10,7 +10,13 @@
     "type": "git",
     "url": "https://github.com/tameraydin/saphir.git"
   },
-  "keywords": [],
+  "keywords": [
+    "object",
+    "array",
+    "observable",
+    "observation",
+    "watch"
+  ],
   "author": "Tamer Aydin (http://tamerayd.in)",
   "contributors": [{
     "name": "Tamer Aydin",
