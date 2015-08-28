@@ -75,7 +75,6 @@ gulp.task('coverage', ['prepare-test'], function(cb) {
         .pipe(jasmine())
         .pipe(istanbul.writeReports())
         .on('end', function() {
-          del([PATH.TEST + pkg.name + '.js']);
           cb();
         });
     });
