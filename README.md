@@ -4,6 +4,8 @@ A small library that helps to observe defined Object/Array properties.
 
 ```bash
 npm install saphir
+# or
+bower install saphir
 ```
 
 ```javascript
