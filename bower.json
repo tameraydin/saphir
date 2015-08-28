@@ -5,7 +5,7 @@
   "main": "dist/saphir.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tameraydin/saphir.git"
+    "url": "git://github.com/tameraydin/saphir.git"
   },
   "keywords": [
     "object",
